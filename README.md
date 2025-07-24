@@ -1,35 +1,20 @@
-# Fork the repo
+# Data Exploration for Job Market Analysis
+In a rapidly evolving job landscape, understanding the trends and dynamics of the job market is crucial for both employers and job seekers. This project focuses on exploring a dataset related to job listings, which includes features such as job titles, salaries, experience levels, required skills, company locations, and job descriptions.
 
-Go to https://github.com/code-with-serah/ai-summer-sprint-bootcamp
-Click the “Fork” button in the top-right
+Presentation Link: 
+https://www.canva.com/design/DAGt9H7yKuE/NmqsVy1a13qYaigrbsC78w/view?utm_content=DAGt9H7yKuE&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h22f52fbd02
 
-Clone your fork (your version of the repo)
+## Members & Roles
+- Streamlit Application **[plustamara]**
+- Data Visualization **[plustamara]**
+- Data Cleaning **[Mustafa Türkalp]**
+- Feature Engineering **[Salam Bou Hamdane]**
+- Predictive Modeling **[Hiaj]**
+- Presentation **[Mustafa Türkalp & Zeinab]**
 
-Replace YOUR-USERNAME with your GitHub username
 
-```
-git clone https://github.com/YOUR-USERNAME/ai-summer-sprint-bootcamp.git
-cd ai-summer-sprint-bootcamp
-```
-
-Upload your project files into this folder
-
-Stage and commit your changes
-
-```
-git add .
-git commit -m "Group Project #3: (your project name)"
-```
-Push to your fork
-
-```
-git push origin main
-```
-
-Create a Pull Request
-
-Go to your fork on GitHub
-
-Click “Compare & pull request”
-
-Add a description, then click “Create pull request”
+## To run the Streamlit Application:
+```bash
+git clone https://github.com/MouTurE/BootcampProject.git
+pip install pandas streamlit
+streamlit run app.py  
