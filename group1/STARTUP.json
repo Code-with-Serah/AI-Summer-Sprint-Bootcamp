@@ -1,0 +1,209 @@
+{
+  "name": "STARTUP",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "startup-evaluator",
+        "responseMode": "=responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "40fa212b-27c3-470c-8f4b-437568f174bb",
+      "name": "Webhook",
+      "webhookId": "a02ce5ef-d50e-48f3-8845-ec78e2008dee"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c9f3b03f-4363-4baf-81dd-72925f533311",
+              "leftValue": "={{$json[\"body\"][\"idea\"]}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "f0b4927e-2cea-472b-a484-5c45600b2f7f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Helper function to safely extract text from various response formats\nfunction extractRawText(item) {\n  const possiblePaths = [\n    item.json?.content?.parts?.[0]?.text,\n    item.json?.summary,\n    item.json?.text,\n    item.json?.response,\n    item.json?.message,\n    item.json?.data, // additional common path\n    item.text, // sometimes text is at root level\n    item.content // sometimes content is at root level\n  ];\n  \n  return possiblePaths.find(path => path && typeof path === 'string') || '';\n}\n\n// Helper function to parse JSON with multiple fallback strategies\nfunction parseAnalysisJson(rawText) {\n  if (!rawText || typeof rawText !== 'string') {\n    return null;\n  }\n\n  // Strategy 1: Try parsing markdown JSON block\n  const jsonMarkdownMatch = rawText.match(/```json\\s*\\n([\\s\\S]*?)\\n\\s*```/);\n  if (jsonMarkdownMatch) {\n    try {\n      return JSON.parse(jsonMarkdownMatch[1].trim());\n    } catch (error) {\n      console.log('Failed to parse JSON from markdown block:', error.message);\n    }\n  }\n\n  // Strategy 2: Try parsing any JSON block (not just ```json```)\n  const anyCodeBlockMatch = rawText.match(/```[a-zA-Z]*\\s*\\n([\\s\\S]*?)\\n\\s*```/);\n  if (anyCodeBlockMatch) {\n    try {\n      return JSON.parse(anyCodeBlockMatch[1].trim());\n    } catch (error) {\n      console.log('Failed to parse JSON from code block:', error.message);\n    }\n  }\n\n  // Strategy 3: Look for JSON object in text (between curly braces)\n  const jsonObjectMatch = rawText.match(/\\{[\\s\\S]*\\}/);\n  if (jsonObjectMatch) {\n    try {\n      return JSON.parse(jsonObjectMatch[0]);\n    } catch (error) {\n      console.log('Failed to parse extracted JSON object:', error.message);\n    }\n  }\n\n  // Strategy 4: Try parsing the entire raw text as JSON\n  try {\n    return JSON.parse(rawText.trim());\n  } catch (error) {\n    console.log('Failed to parse raw text as JSON:', error.message);\n  }\n\n  return null;\n}\n\n// Helper function to create standardized output with better defaults\nfunction createStandardizedOutput(parsedAnalysis, itemIndex) {\n  const defaultValues = {\n    summary: \"Analysis could not be parsed\",\n    market_potential: \"Market analysis unavailable\",\n    key_risks: \"Risk assessment unavailable\", \n    suggestions: \"Recommendations unavailable\",\n    final_verdict: \"Verdict unavailable\",\n    validation_strategy: \"Validation strategy unavailable\"\n  };\n\n  if (!parsedAnalysis) {\n    return {\n      ...defaultValues,\n      parse_success: false,\n      item_index: itemIndex\n    };\n  }\n\n  // Helper function to safely extract nested values\n  const safeGet = (obj, path, defaultVal = '') => {\n    return path.split('.').reduce((current, key) => {\n      if (current && typeof current === 'object' && key in current) {\n        return current[key];\n      }\n      return defaultVal;\n    }, obj);\n  };\n\n  // Helper function to format arrays as readable text\n  const formatArray = (arr) => {\n    if (!Array.isArray(arr)) return arr;\n    return arr.join(', ');\n  };\n\n  // Create a comprehensive summary from the analysis\n  const createSummary = (analysis) => {\n    if (analysis.summary) return analysis.summary;\n    \n    let summaryParts = [];\n    if (analysis.overall_score) {\n      summaryParts.push(`Overall Score: ${analysis.overall_score}/10`);\n    }\n    if (analysis.founder_profile) {\n      summaryParts.push(`Founder Profile: ${analysis.founder_profile}`);\n    }\n    if (analysis.market_analysis?.size) {\n      summaryParts.push(`Market: ${analysis.market_analysis.size}`);\n    }\n    \n    return summaryParts.length > 0 ? summaryParts.join('. ') : defaultValues.summary;\n  };\n\n  return {\n    summary: createSummary(parsedAnalysis),\n    \n    market_potential: \n      parsedAnalysis.market_potential || \n      parsedAnalysis.marketPotential || \n      (parsedAnalysis.market_analysis ? \n        `Potential: ${parsedAnalysis.market_analysis.potential || 'N/A'}/10. ${parsedAnalysis.market_analysis.size || ''}. Competition: ${parsedAnalysis.market_analysis.competition || 'N/A'}` :\n        defaultValues.market_potential),\n    \n    key_risks: \n      parsedAnalysis.key_risks || \n      parsedAnalysis.keyRisks || \n      parsedAnalysis.risks ||\n      formatArray(safeGet(parsedAnalysis, 'strategic_insights.key_challenges')) ||\n      formatArray(safeGet(parsedAnalysis, 'personalized_advice.common_pitfalls')) ||\n      defaultValues.key_risks,\n    \n    suggestions: \n      parsedAnalysis.suggestions || \n      parsedAnalysis.recommendations ||\n      formatArray(safeGet(parsedAnalysis, 'personalized_advice.critical_next_steps')) ||\n      formatArray(safeGet(parsedAnalysis, 'execution_roadmap.immediate_steps')) ||\n      defaultValues.suggestions,\n    \n    final_verdict: \n      parsedAnalysis.final_verdict || \n      parsedAnalysis.finalVerdict || \n      parsedAnalysis.verdict ||\n      (parsedAnalysis.overall_score ? \n        `Score: ${parsedAnalysis.overall_score}/10. ${safeGet(parsedAnalysis, 'strategic_insights.funding_potential') ? `Funding potential: ${parsedAnalysis.strategic_insights.funding_potential}` : ''}` :\n        defaultValues.final_verdict),\n    \n    validation_strategy: \n      parsedAnalysis.validation_strategy || \n      parsedAnalysis.validationStrategy ||\n      formatArray(safeGet(parsedAnalysis, 'execution_roadmap.validation_methods')) ||\n      defaultValues.validation_strategy,\n      \n    parse_success: true,\n    item_index: itemIndex,\n    \n    // Include any additional fields that might be present\n    ...Object.keys(parsedAnalysis).reduce((acc, key) => {\n      if (!['summary', 'market_potential', 'marketPotential', 'key_risks', 'keyRisks', 'risks', \n            'suggestions', 'recommendations', 'final_verdict', 'finalVerdict', 'verdict',\n            'validation_strategy', 'validationStrategy'].includes(key)) {\n        acc[key] = parsedAnalysis[key];\n      }\n      return acc;\n    }, {})\n  };\n}\n\nreturn items.map((item, index) => {\n  console.log(`Processing item ${index}:`, item.json);\n  \n  const rawText = extractRawText(item);\n  console.log(`Raw text extracted (${rawText.length} chars):`, rawText.substring(0, 200) + '...');\n  \n  if (!rawText) {\n    console.log('No text content found in item');\n    const output = createStandardizedOutput(null, index);\n    return {\n      summary: output.summary,\n      market_potential: output.market_potential,\n      key_risks: output.key_risks,\n      suggestions: output.suggestions,\n      final_verdict: output.final_verdict,\n      validation_strategy: output.validation_strategy,\n      parse_success: output.parse_success,\n      item_index: output.item_index,\n      error: 'No text content found',\n      parsing_attempted: false\n    };\n  }\n  \n  const parsedAnalysis = parseAnalysisJson(rawText);\n  \n  if (parsedAnalysis) {\n    console.log('Successfully parsed analysis:', Object.keys(parsedAnalysis));\n  } else {\n    console.log('Failed to parse analysis from text');\n  }\n  \n  const output = createStandardizedOutput(parsedAnalysis, index);\n  \n  return {\n    summary: output.summary,\n    market_potential: output.market_potential,\n    key_risks: output.key_risks,\n    suggestions: output.suggestions,\n    final_verdict: output.final_verdict,\n    validation_strategy: output.validation_strategy,\n    parse_success: output.parse_success,\n    item_index: output.item_index,\n    raw_text_preview: rawText.substring(0, 100) + (rawText.length > 100 ? '...' : ''),\n    parsing_attempted: true,\n    // Include any additional fields that were parsed\n    ...Object.keys(output).reduce((acc, key) => {\n      if (!['summary', 'market_potential', 'key_risks', 'suggestions', 'final_verdict', \n            'validation_strategy', 'parse_success', 'item_index'].includes(key)) {\n        acc[key] = output[key];\n      }\n      return acc;\n    }, {})\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        -80
+      ],
+      "id": "7cac69ce-53e6-42a0-835d-f777d895f0f4",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1184,
+        -96
+      ],
+      "id": "bd17d828-deb6-4c91-a11d-5d95c7e71d0f",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": false,\n  \"error\": \"Please provide a startup idea in the 'idea' field\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        416,
+        96
+      ],
+      "id": "3c1448a8-a881-4887-b11f-3f1ac2485eae",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-1.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-1.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an expert startup advisor with 15+ years of experience. You provide honest, data-driven evaluations of business ideas. Always respond in valid JSON format.",
+              "role": "model"
+            },
+            {
+              "content": "=Evaluate this startup idea: {{ $json.body.idea }}\n\nUse this analysis framework:\n\n1. Assess the technical complexity and architecture needs.\n2. Evaluate market potential and validation requirements.\n3. Consider the founder's likely experience level based on the idea's sophistication.\n4. Provide appropriate guidance tailored to the founder's skill level.\n\nRespond **ONLY** with a JSON object exactly matching this format (do not add any explanations, greetings, markdown, or extra text outside the JSON):\n\n{\n  \"overall_score\": (integer from 1 to 10),\n  \"founder_profile\": \"technical\" | \"non-technical\" | \"first-time\" | \"experienced\",\n  \"market_analysis\": {\n    \"potential\": (integer from 1 to 10),\n    \"size\": \"string describing market size and opportunity\",\n    \"competition\": \"low\" | \"medium\" | \"high\"\n  },\n  \"technical_assessment\": {\n    \"complexity\": (integer from 1 to 10),\n    \"recommended_stack\": [\"string listing technologies or platforms\"],\n    \"mvp_timeline\": \"string describing expected MVP delivery time, e.g., '3 months'\",\n    \"no_code_options\": [\"string listing no-code platforms or tools\"] \n  },\n  \"execution_roadmap\": {\n    \"immediate_steps\": [\"string listing actionable next steps\"],\n    \"validation_methods\": [\"string listing how to validate the idea\"],\n    \"resource_requirements\": \"string describing needed resources\"\n  },\n  \"strategic_insights\": {\n    \"key_challenges\": [\"string listing main challenges\"],\n    \"differentiation_opportunities\": [\"string listing ways to stand out\"],\n    \"business_models\": [\"string listing viable business models\"],\n    \"funding_potential\": \"low\" | \"medium\" | \"high\"\n  },\n  \"personalized_advice\": {\n    \"critical_next_steps\": [\"string listing key actions to take\"],\n    \"common_pitfalls\": [\"string listing frequent mistakes to avoid\"],\n    \"success_factors\": [\"string listing important factors for success\"]\n  }\n}\n\nUse clear, concise language inside the JSON strings to fully explain your evaluation, risks, suggestions, and advice.\n\nDo not include any text before or after this JSON object. Only output the JSON.\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        576,
+        -80
+      ],
+      "id": "988836f8-5f1a-4614-8567-dd76f7c5dc00",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "E01ouHo8J83zSGqV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        896,
+        128
+      ],
+      "typeVersion": 1,
+      "id": "6999ba8c-ba6f-4195-904b-924ac0d14e9b",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d71abd27-c7f2-4419-af59-36ea308d32dc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "faff79cd45f458fc8f3edccf1cd1c9a3fc316a37f51a9034ae467be9943849d8"
+  },
+  "id": "45qJTvZMH43VcrwS",
+  "tags": []
+}
