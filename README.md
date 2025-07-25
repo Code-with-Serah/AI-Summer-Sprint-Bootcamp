@@ -33,3 +33,4 @@ Go to your fork on GitHub
 Click “Compare & pull request”
 
 Add a description, then click “Create pull request”
+# My Fake News Detection Project
