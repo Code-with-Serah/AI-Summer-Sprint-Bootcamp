@@ -1,19 +1,35 @@
-This directory includes a few sample datasets to get you started.
+# Fake News Detection Project
 
-*   `california_housing_data*.csv` is California housing data from the 1990 US
-    Census; more information is available at:
-    https://docs.google.com/document/d/e/2PACX-1vRhYtsvc5eOR2FWNCwaBiKL6suIOrxJig8LcSBbmCbyYsayia_DvPOOBlXZ4CAlQ5nlDD8kTaIDRwrN/pub
+"We may not stop fake news, but we can expose it."
 
-*   `mnist_*.csv` is a small sample of the
-    [MNIST database](https://en.wikipedia.org/wiki/MNIST_database), which is
-    described at: http://yann.lecun.com/exdb/mnist/
+ Overview
+This project aims to detect and classify news articles as **real** or **fake** using multiple machine learning models. The goal is to provide a robust pipeline capable of identifying misinformation and enhancing digital literacy.
 
-*   `anscombe.json` contains a copy of
-    [Anscombe's quartet](https://en.wikipedia.org/wiki/Anscombe%27s_quartet); it
-    was originally described in
+Objectives
+- Automatically classify news content based on its authenticity.
+- Compare and evaluate the performance of different machine learning models.
+- Build an interactive web app interface for real-time predictions using Streamlit.
 
-    Anscombe, F. J. (1973). 'Graphs in Statistical Analysis'. American
-    Statistician. 27 (1): 17-21. JSTOR 2682899.
+Technologies Used
+- **Python**
+- **Pandas, NumPy, Matplotlib, Seaborn**
+- **Natural Language Processing (NLP)**
+  - TF-IDF Vectorization
+  - Text Preprocessing (stopwords removal, lemmatization, etc.)
+- **Machine Learning Algorithms**
+  - Logistic Regression (LR)
+  - Decision Tree (DT)
+  - Gradient Boosting Classifier (GBC)
+  - Random Forest Classifier (RFC)
+- **Streamlit** – For building the web application
+- **Google Colab** – For development and training
 
-    and our copy was prepared by the
-    [vega_datasets library](https://github.com/altair-viz/vega_datasets/blob/4f67bdaad10f45e3549984e17e1b3088c731503d/vega_datasets/_data/anscombe.json).
+📊 Dataset
+- **Source**: [Kaggle Fake News Dataset] True & Fake CSV
+- **Description**: The dataset contains news articles labeled as FAKE or REAL, along with titles, texts, and subjects.
+
+ 🚀 How to Run
+
+https://colab.research.google.com/drive/1ndCBYYQ5vc_TJc8-xyKuUJf8LDqOk7hp#scrollTo=pVtMYWG3oWMj
+
+## Dont Forget to input the files  (Fake.csv & True.csv)**
