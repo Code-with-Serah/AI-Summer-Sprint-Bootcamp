@@ -15,6 +15,7 @@ https://www.canva.com/design/DAGt9H7yKuE/NmqsVy1a13qYaigrbsC78w/view?utm_content
 
 ## To run the Streamlit Application:
 ```bash
-git clone https://github.com/MouTurE/BootcampProject.git
-pip install pandas streamlit
+git clone https://github.com/Code-with-Serah/AI-Summer-Sprint-Bootcamp.git
+// Creating a virtual environment is adviced
+pip install -r requirements.txt
 streamlit run app.py  
