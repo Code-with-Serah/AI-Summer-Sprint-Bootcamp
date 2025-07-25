@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .back-link:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .email-card {
+            background: white;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .email-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .email-idea {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .email-meta {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .email-section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 8px;
+        }
+        
+        .email-text {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .improved-email {
+            border-left-color: #28a745;
+        }
+        
+        .no-emails {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📧 Email History</h1>
+        <a href="{{ url_for('index') }}" class="back-link">← Back to Generator</a>
+    </div>
+
+    {% if emails %}
+        {% for email in emails %}
+        <div class="email-card">
+            <div class="email-header">
+                <div class="email-idea">{{ email.idea }}</div>
+                <div class="email-meta">{{ email.tone|title }} tone • {{ email.length|title }} length</div>
+            </div>
+            
+            <div class="email-section">
+                <div class="section-title">Generated Email:</div>
+                <div class="email-text">{{ email.generated }}</div>
+            </div>
+            
+            {% if email.improved %}
+            <div class="email-section">
+                <div class="section-title">Improved Version:</div>
+                <div class="email-text improved-email">{{ email.improved }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-emails">
+            <p>No emails generated yet.</p>
+            <a href="{{ url_for('index') }}" class="back-link">Generate your first email</a>
+        </div>
+    {% endif %}
+</body>
+</html>
