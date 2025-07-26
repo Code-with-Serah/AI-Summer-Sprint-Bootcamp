@@ -1,0 +1,61 @@
+.popular-movies {
+  padding: 2rem;
+  font-family: sans-serif;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+.search-bar {
+  margin: 1rem 0;
+}
+
+.search-bar input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  width: 250px;
+}
+
+.search-bar button {
+  padding: 0.5rem 1rem;
+  margin-left: 0.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.loading,
+.no-results {
+  margin-top: 1rem;
+  font-style: italic;
+  color: gray;
+}
+
+.movie-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.movie-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  width: 200px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: left;
+}
+
+.movie-card img {
+  width: 100%;
+  border-radius: 4px;
+}
+
+.movie-card h3 {
+  margin: 0.5rem 0;
+}
+
+.rating {
+  color: goldenrod;
+  font-weight: bold;
+}
