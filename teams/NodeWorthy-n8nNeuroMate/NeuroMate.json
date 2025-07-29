@@ -1,0 +1,588 @@
+{
+  "name": "NeuroMate",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -304,
+        -96
+      ],
+      "id": "11386f26-760f-415c-8144-0083dcdfb63d",
+      "name": "Telegram Trigger",
+      "webhookId": "2a46a812-6e81-4a51-85e8-6d0a39346a5b",
+      "credentials": {
+        "telegramApi": {
+          "id": "cJOjgDdflYUTfvwW",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extract two details from the user message:\n\nTask – What the user wants to be reminded about.\n\nReminderDateTime – A full ISO 8601 datetime string (with timezone) for when the reminder should occur.\n\nInput:\n\nUser message: {{ $json.message.text }}\n\nCurrent datetime: {{ $node[\"Date & Time\"].json[\"currentDate\"] }} (ISO 8601 format)\n\nRules:\n\nIf only a time is mentioned (e.g., “4”, “4am”, “4pm”), combine it with today’s date and the timezone.\n\nRecognize AM/PM accurately.\n\nIf no AM/PM is mentioned, interpret the time using a 24-hour assumption based on common patterns.\n\nIf the resulting time is already passed today, set the reminder for tomorrow instead.\n\nIf a full date is mentioned (e.g., “July 30”), use that as-is.\n\nOutput must always be a full ISO 8601 datetime string with timezone.\n\nOutput Format:\n\nTask: [task description]\nReminderDateTime: [ISO 8601 datetime with timezone]\nExample Input:\nUser message: \"remind me to eat at 4am\"\nCurrent datetime: \"2025-07-26T05:06:42.717+03:00\"\n\nExample Output:\n\nTask: eat  \nReminderDateTime: 2025-07-27T04:00:00+03:00",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        208,
+        -64
+      ],
+      "id": "48a526d4-3e0d-4fcb-86d2-3ee506572186",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        16,
+        128
+      ],
+      "id": "cd34bffc-d746-416d-9d7f-4266eff2d7aa",
+      "name": "Mistral Cloud Chat Model1",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "2xRIiJH3jsmLohtm",
+          "name": "Mistral Cloud account"
+        }
+      },
+      "notes": "Extract the task description and the reminder time from the following message. \nReturn only a JSON object like this:\n{\n  \"task\": \"Submit assignment\",\n  \"reminderTime\": \"2025-07-24T14:30:00Z\"\n}\n\nMessage: \"{{ $json[\"message\"][\"text\"] }}\""
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json[\"message\"][\"from\"][\"id\"] }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        128
+      ],
+      "id": "45e048da-f570-4cdf-92e3-ec706535e6e0",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = items[0].json.output;\n\n// Extract task and reminder time from the raw string\nconst taskMatch = raw.match(/Task:\\s*(.+)/);\nconst timeMatch = raw.match(/ReminderDateTime:\\s*(.+)/);\n\nconst task = taskMatch ? taskMatch[1].trim() : '';\nlet reminderTime = timeMatch ? timeMatch[1].trim() : '';\n\n// Handle timezone formatting\nif (!reminderTime.endsWith('Z') && !reminderTime.includes('+')) {\n  reminderTime += 'Z';\n}\n\nconst currentDate = new Date($node[\"Date & Time\"].json.currentDate);\nlet reminderDate = new Date(reminderTime);\n\n// Adjust date if reminder time has already passed today\nif (reminderDate <= currentDate) {\n  reminderDate.setDate(reminderDate.getDate() + 1);\n  reminderTime = reminderDate.toISOString();\n}\n\n// Format time nicely\nconst friendlyTime = reminderDate.toLocaleString('en-US', {\n  timeZone: 'Europe/Istanbul',\n  year: 'numeric',\n  month: 'short',\n  day: 'numeric',\n  hour: '2-digit',\n  minute: '2-digit',\n  hour12: false\n});\n\n// Confirmation message (immediate)\nconst confirmationMessage = `Hi! ✅\\nI've set your reminder:\\n\\n📝 Task: ${task}\\n⏰ Time: ${friendlyTime}`;\n\n// Reminder message (to be sent later at reminder time)\nconst reminderMessage = `⏰ Reminder! It’s time! Task: ${task}`;\n\nreturn [{\n  json: {\n    confirmationMessage,\n    reminderMessage,\n    task,\n    reminderTime: friendlyTime,\n    reminderTimeISO: reminderTime\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        -64
+      ],
+      "id": "b40117e7-0c7d-4087-9f80-c498227d8299",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.confirmationMessage }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        832,
+        -64
+      ],
+      "id": "cc282c06-3d6a-40e9-976f-6dcdf208e9a3",
+      "name": "Send a text message",
+      "webhookId": "7f8ab161-aaa8-4530-989b-ff9989ecceda",
+      "credentials": {
+        "telegramApi": {
+          "id": "cJOjgDdflYUTfvwW",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "includeInputFields": true
+        }
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        -192
+      ],
+      "id": "8ab5dedc-5aba-45d2-9ce2-23f28369afe8",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{ $('Code').item.json.reminderTimeISO }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1280,
+        -64
+      ],
+      "id": "51958e18-1462-467a-85b9-f86a06aa6cf9",
+      "name": "Wait",
+      "webhookId": "7ebad91c-60bb-422f-a5a9-fd28953dafe5"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('Code').item.json.reminderMessage }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1488,
+        -64
+      ],
+      "id": "cc432c14-6e76-4444-abb5-688402f34f55",
+      "name": "Send a text message1",
+      "webhookId": "623a520a-9a1d-40d8-b6a8-54ece586b2fd",
+      "credentials": {
+        "telegramApi": {
+          "id": "cJOjgDdflYUTfvwW",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1vJnHmZ9dJ8JytzjzPbl0n6YUpmfUcWDQaaCYse2xkhw",
+          "mode": "list",
+          "cachedResultName": "myReminders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vJnHmZ9dJ8JytzjzPbl0n6YUpmfUcWDQaaCYse2xkhw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1vJnHmZ9dJ8JytzjzPbl0n6YUpmfUcWDQaaCYse2xkhw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Task": "={{ $('Code').item.json.task }}",
+            "ReminderDateTime": "={{ $('Code').item.json.reminderTime }}",
+            "CreatedAt": "={{ new Date($('Date & Time').item.json.currentDate).toLocaleString('en-US', {\n  timeZone: 'Europe/Istanbul',\n  year: 'numeric',\n  month: 'short',\n  day: 'numeric',\n  hour: '2-digit',\n  minute: '2-digit',\n  hour12: false\n}) }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Task",
+              "displayName": "Task",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ReminderDateTime",
+              "displayName": "ReminderDateTime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "CreatedAt",
+              "displayName": "CreatedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        1072,
+        -64
+      ],
+      "id": "17d88e4d-fb6a-47fd-b298-666277eae86f",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3y17vGIair1gwPTB",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "values": [],
+          "item": [
+            {
+              "hour": 0
+            }
+          ]
+        }
+      },
+      "position": [
+        -304,
+        336
+      ],
+      "type": "n8n-nodes-base.cron",
+      "name": "Automatic Daily Check1",
+      "id": "3fe8562b-fae9-4230-90e8-4f55149ae53c",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "faizahshahid2015@gmail.com",
+          "mode": "list",
+          "cachedResultName": "faizahshahid2015@gmail.com"
+        },
+        "options": {
+          "timeZone": {
+            "__rl": true,
+            "value": "Asia/Beirut",
+            "mode": "list",
+            "cachedResultName": "Asia/Beirut"
+          }
+        }
+      },
+      "name": "Get Calendar Events1",
+      "position": [
+        -64,
+        336
+      ],
+      "type": "n8n-nodes-base.googleCalendar",
+      "id": "9a4947eb-3c9b-430a-8758-da393d0c2955",
+      "typeVersion": 1.3,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "B2X3Z121B4dpHQcu",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "const options = { \n  timeZone: 'Asia/Beirut', \n  year: 'numeric', month: 'numeric', day: 'numeric', \n  hour: '2-digit', minute: '2-digit', second: '2-digit' \n};\n\nlet reminderMessage = \"Upcoming Events:\\n\";\n\nif (items.length === 0) {\n  return [{ json: { reminderMessage: \"No upcoming events today.\" } }];\n}\n\nfor (const item of items) {\n  const event = item.json;\n  const summary = event.summary || \"No Title\";\n\n  const start = event.start && event.start.dateTime \n    ? new Date(event.start.dateTime).toLocaleString('en-US', options)\n    : (event.start && event.start.date \n        ? new Date(event.start.date).toLocaleDateString('en-US', options)\n        : \"N/A\");\n\n  const end = event.end && event.end.dateTime \n    ? new Date(event.end.dateTime).toLocaleString('en-US', options)\n    : (event.end && event.end.date \n        ? new Date(event.end.date).toLocaleDateString('en-US', options)\n        : \"N/A\");\n\n  const location = event.location ? ` at ${event.location}` : \"\";\n\n  reminderMessage += `\\n- **${summary}**\\n  Starts: ${start}\\n  Ends: ${end}${location}\\n`;\n}\n\nreturn [{ json: { reminderMessage } }];\n"
+      },
+      "position": [
+        176,
+        336
+      ],
+      "name": "Format Reminders1",
+      "type": "n8n-nodes-base.function",
+      "id": "19cbc4db-f6a7-4cfd-85fa-73af6f0c9b15",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dc8e4e11-d735-46ef-a9b2-6014fa298964",
+              "leftValue": "={{$items.length}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "position": [
+        416,
+        336
+      ],
+      "name": "Check for Events1",
+      "id": "319d5ab2-4a7c-4291-99ab-fa09913e3f7b",
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "chatId": "1172039442",
+        "text": "={{$json.reminderMessage}}",
+        "additionalFields": {
+          "appendAttribution": true,
+          "disable_notification": false,
+          "disable_web_page_preview": false,
+          "reply_to_message_id": 0,
+          "message_thread_id": 0
+        }
+      },
+      "position": [
+        688,
+        320
+      ],
+      "name": "Send Telegram Reminder1",
+      "type": "n8n-nodes-base.telegram",
+      "id": "f3bd9f0c-4141-46ef-a10d-071443323fb2",
+      "webhookId": "63d8dcdd-352e-4d04-8dbd-865e4cbb738c",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "cJOjgDdflYUTfvwW",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "# **Daily Calendar Reminder Workflow**\n\n-Trigger: Runs daily at midnight (00:00) using Cron node.\n\n-Fetch: Gets all events from Google Calendar for the day in the 'Asia/Beirut' timezone.\n\n-Process: Formats event details (title, start/end times, location) into a reminder message.\n\n-Check: Only proceeds if there are upcoming events.\n\n-Send: Sends the reminder message via Telegram to chat ID 1172039442.",
+        "height": 368,
+        "width": 576
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -336,
+        576
+      ],
+      "typeVersion": 1,
+      "id": "998ad189-b23d-467f-964c-868ea129fb0a",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# **Note:**\nYou need to manually provide your Telegram chat ID in the “Send Telegram Reminder” node’s chatId field for the message to be sent correctly.\n\nDynamic chat ID from another workflow is not supported yet.",
+        "height": 192,
+        "width": 480,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        272,
+        576
+      ],
+      "typeVersion": 1,
+      "id": "f94cee28-922f-4b5b-87c7-216f7f1297b3",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "# **Reminder Bot Workflow (Telegram + AI + Google Sheets)**\n\n# **Trigger:** \n\nListens for Telegram messages.\n\n# **Process:**\n\nGets current date/time.\n\nSends message text to AI agent to extract:\n\nTask description\n\nReminder datetime (ISO 8601, with timezone, adjusted if time passed).\n\nParses AI response in Code node; formats confirmation & reminder messages.",
+        "height": 480,
+        "width": 976,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -304,
+        -720
+      ],
+      "typeVersion": 1,
+      "id": "d9e3b2ef-5498-4d2f-ae6e-e843b9eeaf71",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "# **Outputs:**\n\nSends confirmation message to user immediately.\n\nLogs reminder details (Task, ReminderDateTime, CreatedAt) to Google Sheets.\n\nWaits until reminder time.\n\nSends reminder message to user.",
+        "height": 256,
+        "width": 528,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        704,
+        -720
+      ],
+      "typeVersion": 1,
+      "id": "d55a273c-1e59-488d-a895-7851aa296395",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Automatic Daily Check1": {
+      "main": [
+        [
+          {
+            "node": "Get Calendar Events1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Calendar Events1": {
+      "main": [
+        [
+          {
+            "node": "Format Reminders1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Reminders1": {
+      "main": [
+        [
+          {
+            "node": "Check for Events1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Events1": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Reminder1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a50418f6-8fe2-4dcb-963a-7391f85db938",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "46c81cec16053c69c89e6a5986c74d451b82159300421445efd909eb7757014b"
+  },
+  "id": "uICdTPXLE7uEkiE7",
+  "tags": []
+}
