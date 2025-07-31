@@ -1,3 +1,0 @@
-2025-07-22 12:15:22 - StressDetection - INFO - Logging to file: logs\stress_detection_20250722_121522.log
-2025-07-22 12:15:22 - StressDetection - INFO - Starting Enhanced Stress Detection System...
-2025-07-22 12:15:22 - StressDetection - ERROR - Application error: Too early to create variable: no default root window

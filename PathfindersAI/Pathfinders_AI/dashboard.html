@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - StudyBuddy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <img src="/static/images/chatbot.png" alt="StudyBuddy" width="30">
+                <span>StudyBuddy</span>
+            </a>
+            <nav>
+                <a href="chat.html"><i class="fas fa-comment"></i> Chat</a>
+                <a href="logout.html" class="btn-outline"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <button id="themeToggle" class="theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="dashboard-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-comments"></i>
+                    <h3>24</h3>
+                    <p>Chat Sessions</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-book"></i>
+                    <h3>8</h3>
+                    <p>Subjects Covered</p>
+                </div>
+            </div>
+            
+            <div class="content-grid">
+                <div class="card">
+                    <h2><i class="fas fa-history"></i> Recent Chats</h2>
+                    <div class="chat-history" id="recentChats">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-chart-line"></i> Weekly Activity</h2>
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/theme.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

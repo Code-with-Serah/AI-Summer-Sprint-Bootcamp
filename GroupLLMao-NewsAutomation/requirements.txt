@@ -1,0 +1,6 @@
+python-telegram-bot
+python-dotenv==1.0.0
+requests
+newspaper3k
+lxml_html_clean
+flask

@@ -1,21 +1,58 @@
-# Data Exploration for Job Market Analysis
-In a rapidly evolving job landscape, understanding the trends and dynamics of the job market is crucial for both employers and job seekers. This project focuses on exploring a dataset related to job listings, which includes features such as job titles, salaries, experience levels, required skills, company locations, and job descriptions.
+# AI Summer Sprint Bootcamp Projects
 
-Presentation Link: 
-https://www.canva.com/design/DAGt9H7yKuE/NmqsVy1a13qYaigrbsC78w/view?utm_content=DAGt9H7yKuE&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h22f52fbd02
+This repository contains all the team projects from the AI Summer Sprint Bootcamp.
 
-## Members & Roles
-- Streamlit Application **[plustamara]**
-- Data Visualization **[plustamara]**
-- Data Cleaning **[Mustafa Türkalp]**
-- Feature Engineering **[Salam Bou Hamdane]**
-- Predictive Modeling **[Hiaj]**
-- Presentation **[Mustafa Türkalp & Zeinab]**
+**Total Teams: 20**
 
+## 📁 Repository Structure
 
-## To run the Streamlit Application:
-```bash
-git clone https://github.com/Code-with-Serah/AI-Summer-Sprint-Bootcamp.git
-// Creating a virtual environment is adviced
-pip install -r requirements.txt
-streamlit run app.py  
+Each team has their own dedicated folder at the root level:
+
+```
+├── 404-Not-Founders-LLM/                    # Smart Email Generator with Mistral API
+├── AI-Job-Market-Analysis-Team/             # Job Market Analysis Dashboard
+├── CodingTheSpace-AsteroidPredictor/
+├── Data Scientists - Data Science/
+├── DataVerse-FakeNewsDetection/
+├── FitBytesTeam-MealRecommender/
+├── Git-Push-Gang-Deep-Learning/             # Stress Analysis System
+├── Group11-DataCore-StomachCancerPredictor/
+├── Group12-HealthPredictor/
+├── Group24-DataExploration/
+├── Group3/
+├── GroupLLMao-NewsAutomation/
+├── N8Nnovators-N8n/
+├── NateN-DreamInterpreter/
+├── Neural-Crushers-ProductRecommenderSystem/
+├── NodeWorthy-n8nNeuroMate/
+├── OBFFS-BabyCryClassifier/
+├── PathfindersAI/
+├── Team-AKS-N8N/
+├── WarehouseTeam-LayoutOptimization/
+└── documentation/                           # Bootcamp documentation and reports
+```
+
+## 📝 Documentation
+
+All bootcamp documentation and reports can be found in the `documentation/` folder:
+- Complete team list
+- Documentation grading report
+- Technical excellence report
+- Final documentation report
+
+## 🚀 Getting Started
+
+Each team's project has its own README with specific setup instructions. Navigate to the respective team folder to learn more about their project.
+
+## 👥 Teams
+
+Each folder represents a team's complete project submission including:
+- Source code
+- Documentation
+- Datasets (where applicable)
+- Requirements files
+- Project-specific setup instructions
+
+## 📄 License
+
+Please refer to individual team projects for their respective licenses.
