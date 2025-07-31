@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Loan Approval System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .form-container {
+            padding: 30px;
+        }
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            flex: 1;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        .auto-calculated {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .approved {
+            background-color: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        .loading {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI-Powered Loan Approval System</h1>
+            <p>Using XGBoost Machine Learning Model</p>
+        </div>
+        
+        <div class="form-container">
+            <form id="loanForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Age</label>
+                        <input type="number" id="person_age" min="18" max="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select id="person_gender" required>
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Annual Income ($)</label>
+                        <input type="number" id="person_income" min="1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Employment Experience (years)</label>
+                        <input type="number" id="person_emp_exp" min="0" max="50" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Education Level</label>
+                        <select id="person_education" required>
+                            <option value="">Select Education</option>
+                            <option value="High School">High School</option>
+                            <option value="Associate">Associate Degree</option>
+                            <option value="Bachelor">Bachelor's Degree</option>
+                            <option value="Master">Master's Degree</option>
+                            <option value="Doctorate">Doctorate</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Home Ownership</label>
+                        <select id="person_home_ownership" required>
+                            <option value="">Select Ownership</option>
+                            <option value="RENT">Rent</option>
+                            <option value="OWN">Own</option>
+                            <option value="MORTGAGE">Mortgage</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Loan Amount ($)</label>
+                        <input type="number" id="loan_amnt" min="500" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Loan Intent</label>
+                        <select id="loan_intent" required>
+                            <option value="">Select Intent</option>
+                            <option value="PERSONAL">Personal</option>
+                            <option value="EDUCATION">Education</option>
+                            <option value="MEDICAL">Medical</option>
+                            <option value="VENTURE">Business Venture</option>
+                            <option value="HOMEIMPROVEMENT">Home Improvement</option>
+                            <option value="DEBTCONSOLIDATION">Debt Consolidation</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Interest Rate (%)</label>
+                        <input type="number" id="loan_int_rate" min="1" max="30" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Loan as % of Income (Auto-calculated)</label>
+                        <input type="number" id="loan_percent_income" class="auto-calculated" min="0" max="100" step="0.01" readonly required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Credit Score</label>
+                        <input type="number" id="credit_score" min="300" max="850" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Credit History Length (years)</label>
+                        <input type="number" id="cb_person_cred_hist_length" min="1" max="80" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Previous Loan Defaults</label>
+                        <select id="previous_loan_defaults_on_file" required>
+                            <option value="">Select Option</option>
+                            <option value="No">No Previous Defaults</option>
+                            <option value="Yes">Has Previous Defaults</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 30px; color: #444;">Auto-Engineered Metrics</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Debt-to-Income Ratio</label>
+                        <input type="number" id="debt_to_income" class="auto-calculated" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Credit-to-Income (x100k)</label>
+                        <input type="number" id="credit_to_income" class="auto-calculated" readonly>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Experience-to-Age Ratio</label>
+                        <input type="number" id="experience_to_age" class="auto-calculated" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Loan Affordability</label>
+                        <input type="number" id="loan_affordability" class="auto-calculated" readonly>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">Analyze Loan Application</button>
+            </form>
+
+            <div id="result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+    const incomeField = document.getElementById('person_income');
+    const loanField = document.getElementById('loan_amnt');
+    const percentField = document.getElementById('loan_percent_income');
+
+    function updateLoanPercentage() {
+        const income = parseFloat(incomeField.value);
+        const loan = parseFloat(loanField.value);
+        if (income > 0 && loan >= 0) {
+            const percentage = (loan / income) * 100;
+            percentField.value = percentage.toFixed(2);
+        } else {
+            percentField.value = '';
+        }
+    }
+
+    function updateEngineeredFeatures() {
+        const income = parseFloat(document.getElementById('person_income').value);
+        const loan = parseFloat(document.getElementById('loan_amnt').value);
+        const credit = parseFloat(document.getElementById('credit_score').value);
+        const age = parseFloat(document.getElementById('person_age').value);
+        const exp = parseFloat(document.getElementById('person_emp_exp').value);
+
+        const dti = (loan && income) ? loan / income : '';
+        const cti = (credit && income) ? (credit / income) * 100000 : '';
+        const exp_age = (exp && age) ? exp / age : '';
+        const afford = (income && loan) ? income / loan : '';
+
+        document.getElementById('debt_to_income').value = dti ? dti.toFixed(2) : '';
+        document.getElementById('credit_to_income').value = cti ? cti.toFixed(2) : '';
+        document.getElementById('experience_to_age').value = exp_age ? exp_age.toFixed(2) : '';
+        document.getElementById('loan_affordability').value = afford ? afford.toFixed(2) : '';
+    }
+
+    incomeField.addEventListener('input', () => {
+        updateLoanPercentage();
+        updateEngineeredFeatures();
+    });
+    loanField.addEventListener('input', () => {
+        updateLoanPercentage();
+        updateEngineeredFeatures();
+    });
+    document.getElementById('credit_score').addEventListener('input', updateEngineeredFeatures);
+    document.getElementById('person_age').addEventListener('input', updateEngineeredFeatures);
+    document.getElementById('person_emp_exp').addEventListener('input', updateEngineeredFeatures);
+
+    // Submit the form via fetch API
+    document.getElementById('loanForm').addEventListener('submit', async function (e) {
+        e.preventDefault(); // prevent page reload
+
+        const resultDiv = document.getElementById('result');
+        resultDiv.className = 'result loading';
+        resultDiv.style.display = 'block';
+        resultDiv.textContent = 'Analyzing...';
+
+        const data = {
+            person_age: parseFloat(document.getElementById('person_age').value),
+            person_gender: document.getElementById('person_gender').value,
+            person_income: parseFloat(document.getElementById('person_income').value),
+            person_emp_exp: parseFloat(document.getElementById('person_emp_exp').value),
+            person_education: document.getElementById('person_education').value,
+            person_home_ownership: document.getElementById('person_home_ownership').value,
+            loan_amnt: parseFloat(document.getElementById('loan_amnt').value),
+            loan_intent: document.getElementById('loan_intent').value,
+            loan_int_rate: parseFloat(document.getElementById('loan_int_rate').value),
+            loan_percent_income: parseFloat(document.getElementById('loan_percent_income').value),
+            credit_score: parseFloat(document.getElementById('credit_score').value),
+            cb_person_cred_hist_length: parseFloat(document.getElementById('cb_person_cred_hist_length').value),
+            previous_loan_defaults_on_file: document.getElementById('previous_loan_defaults_on_file').value
+        };
+
+        try {
+            const response = await fetch('http://127.0.0.1:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                resultDiv.className = result.prediction_label === 'Approved' ? 'result approved' : 'result rejected';
+                resultDiv.innerHTML = `
+                    <p><strong>Prediction:</strong> ${result.prediction_label}</p>
+                    <p><strong>Confidence:</strong> ${(result.confidence * 100).toFixed(2)}%</p>
+                    <p><strong>Approved Probability:</strong> ${(result.probability_approved * 100).toFixed(2)}%</p>
+                    <p><strong>Rejected Probability:</strong> ${(result.probability_rejected * 100).toFixed(2)}%</p>
+                `;
+            } else {
+                resultDiv.className = 'result rejected';
+                resultDiv.textContent = 'Error: ' + (result.error || 'Something went wrong.');
+            }
+        } catch (err) {
+            resultDiv.className = 'result rejected';
+            resultDiv.textContent = 'Network error. Make sure your Flask backend is running.';
+            console.error(err);
+        }
+    });
+</script>
+
+</body>
+</html>
